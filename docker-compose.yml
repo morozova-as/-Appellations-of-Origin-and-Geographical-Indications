@@ -1,0 +1,22 @@
+version: '3.3'
+
+services:
+  frontend:
+    build: frontend/
+    ports:
+      - "5000:5000"
+      - "35729:35729"
+    env_file:
+      - .env
+#    volumes:
+#      - ./frontend:/app
+    command: npm run dev
+  backend:
+    build: backend/
+    ports:
+      - "8000:8000"
+#    volumes:
+#    - ./backend/src:/app
+    command: python manage.py runserver 0.0.0.0:8000
+
+
