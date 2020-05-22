@@ -39,12 +39,6 @@ def load_model(path):
         return pickle.load(f)
 
 
-class TypeForm(forms.ModelForm):
-    def defineType(self):
-        # do something that validates your data
-        return 'Разное'
-
-
 class ManufacturersAdmin(admin.ModelAdmin):
     model = Manufacturers
     list_display = ['id', 'mainId', 'manufacturer', 'description', 'status', 'href']
@@ -56,17 +50,17 @@ class GeoIndicationAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if not obj.target:
-            clf = load_model('models/classifier.pkl')
-            mlb = load_model('models/multilabel.pkl')
-            vectorizer = load_model('models/vectorizer.pkl')
+            clf = load_model('models/classifier_lb.pkl')
+            lb = load_model('models/label.pkl')
+            vectorizer = load_model('models/vectorizer_lb.pkl')
 
             vect = vectorizer.transform([prepare_text(obj.description)])
-            pred = mlb.inverse_transform(clf.predict(vect))
+            pred = lb.inverse_transform(clf.predict(vect))
 
-            if vect.count_nonzero() == 0 or len(pred[0]) == 0:
+            if vect.count_nonzero() == 0 or len(pred) == 0:
                 obj.target = 'Другое'
             else:
-                obj.target = pred[0][0]
+                obj.target = pred[0]
 
         super().save_model(request, obj, form, change)
 
