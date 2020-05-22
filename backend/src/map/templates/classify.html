@@ -30,7 +30,7 @@
 
     <div class="wrapper">
         <div class="result">
-            Все наименования, у которых не было класса, успешно отклассифицированы.
+            Все наименования успешно отклассифицированы.
         </div>
 
         {% if  data.items %}
@@ -40,6 +40,10 @@
                 {% for key, value in data.items %}
                   <div class="changed">{{key}} - {{value}}</div>
                 {% endfor %}
+            </div>
+        {% else %}
+            <div class="info">
+                Не найдено наименований с пустым классом
             </div>
         {% endif %}
     </div>
