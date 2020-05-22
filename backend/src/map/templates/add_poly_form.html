@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить полигон</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            width: 70vw;
+            margin: auto;
+            padding: 50px 0;
+        }
+
+        * {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 20px;
+            line-height: 24px;
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        #id-nmpt {
+            width: 100px;
+            margin-top: 20px;
+            height: 30px;
+        }
+
+        .submit {
+            margin-top: 20px;
+        }
+
+        #final-result, #add-data, #error {
+            display: none;
+        }
+
+        #add-data {
+            margin-top: 40px;
+        }
+
+        .add-label {
+            margin: 20px 0;
+            width: fit-content;
+        }
+
+        .add-label input {
+            height: 30px;
+        }
+
+        #final-result, #error {
+            margin-top: 40px;
+        }
+
+        #final-result .slot {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<form id="form-one" name="form">
+    <label for="id-nmpt">
+        Введите ID наименования, для которого необходимо определить геополигон:
+        <input type="number" id="id-nmpt" name="id-nmpt">
+    </label>
+
+    <div id="add-data">
+        Были выделены следующие наименования из текста:
+        <div class="slot"></div>
+
+        Если какое-либо наименование необходимо изменить, то это можно сделать заполнив соответствующее поле
+    </div>
+
+    <input type="submit" class="submit" value="Отправить">
+</form>
+
+
+<div id="final-result">
+    Найдены полигоны для следующих географических объектов:
+    <div class="slot"></div>
+    Если поиск не дал результатов или они не верны можно повторить его, переформулиров текст или изменив значение после
+    обработки анализатора
+</div>
+
+<div id="error">
+    <div class="slot"></div>
+</div>
+
+
+</body>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+
+<script>
+
+    let globalStep = 0;
+
+    const firstSubmit = (formData) => {
+        $.ajax({
+            url: '/find_and_normalize/',
+            data: formData,
+            type: 'POST',
+            processData: false,
+            contentType: false,
+            dataType: "json"
+        }).done(function (response) {
+            if (response === null) {
+                $("#error .slot").html(`Наименования с выбранным id не найдено`)
+                $("#error").show()
+                $('.submit').attr('disabled', true);
+            } else if (response.length !== 0) {
+                const response_data = response.map((name, index) => `
+                        <label class="add-label" for="add-${index}">
+
+                            <input name="add-${index}" type="text" id="add-${index}" value="${name}">
+                        </label>
+
+                    `)
+                $("#add-data .slot").html(response_data)
+                $("#add-data").show()
+            }
+
+            globalStep = 1;
+        })
+    }
+
+    const secondStep = (formData) => {
+        $.ajax({
+            url: '/find_coords/',
+            data: formData,
+            type: 'POST',
+            processData: false,
+            contentType: false,
+            dataType: "json"
+        }).done(function (response) {
+            if (response.length !== 0) {
+                const response_data = response.map((name, index) => `
+                        <div>
+                            ${name}
+                        </div>
+
+                    `)
+                $("#final-result .slot").append(response_data)
+                $("#final-result").show();
+                $('.submit').attr('disabled', true);
+            }
+
+            globalStep = 2;
+        })
+    }
+
+    document.querySelector('#form-one').addEventListener('submit', e => {
+        e.preventDefault();
+        const formData = new FormData(e.target)
+
+        if (formData.get('id-nmpt') === ''){
+            $("#error .slot").html(`ID не задано`)
+            $("#error").show()
+            $('.submit').attr('disabled', true);
+            return;
+        }
+
+        if (globalStep === 0)
+            firstSubmit(formData);
+
+        if (globalStep === 1)
+            secondStep(formData);
+
+    })
+
+</script>
+</html>

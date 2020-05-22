@@ -1,4 +1,5 @@
 from django.http import HttpResponse, JsonResponse, FileResponse
+from django.template.response import TemplateResponse
 from django.http.request import HttpRequest
 from map.models import Manufacturers, GeoIndication
 from django.core import serializers
@@ -6,86 +7,20 @@ from django.middleware.csrf import get_token
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from os import path
+from django.shortcuts import render
+import sys
+from django.template.loader import render_to_string
 
 from django.views.decorators.csrf import csrf_exempt
 import json
 
+sys.path.insert(1, '..')
+from define_class import define_class
+from define_geo_by_id import find_locs, normalizeGeoLocation, define_coords
 
-# from .utils import find_locs
 
 def create_csrf_token(request: HttpRequest) -> JsonResponse:
     return JsonResponse({'csrfToken': get_token(request)})
-
-
-# def update_place(request):
-#     s = serializers.serialize('json', Place.objects.all())
-#     return HttpResponse(s, content_type='json')
-#
-#
-# def get_info(request):
-#     name = request.POST['name'].upper()
-#     good_place = Goods.objects.filter(name=name)
-#     print(name)
-#     print(good_place)
-#     s = serializers.serialize('json', good_place)
-#     return HttpResponse(s, content_type='json')
-#
-#
-# def get_the_same(request):
-#     set_places = set()
-#     arr = []
-#     name = request.POST['name'].upper()
-#     good_place = Goods.objects.filter(name=name)
-#     for i in good_place:
-#         set_places.add(i.new_place)
-#
-#     print(set_places)
-#     for i in set_places:
-#         other_name = Goods.objects.filter(new_place=i)
-#         arr.append(other_name)
-#
-#     print(arr)
-#     for i in range(len(arr) - 1):
-#         arr[i + 1] = arr[i].union(arr[i + 1])
-#
-#     s = serializers.serialize('json', arr[len(arr) - 1])
-#     return HttpResponse(s, content_type='json')
-#
-#
-# def get_place(request):
-#     set_places = set()
-#     arr = []
-#     name = request.POST['name'].upper()
-#     good_place = Goods.objects.filter(name=name)
-#
-#     for i in good_place:
-#         set_places.add(i.new_place)
-#
-#     for i in set_places:
-#         coord_place = Place.objects.filter(name=i)
-#         arr.append(coord_place)
-#     for i in range(len(arr) - 1):
-#         arr[i + 1] = arr[i].union(arr[i + 1])
-#     s = serializers.serialize('json', arr[len(arr) - 1])
-#
-#     return HttpResponse(s)
-#
-#
-# def get_all_names(request):
-#     to_find = []
-#     for i in range(len(request.POST) - 1):
-#         to_find.append(request.POST["type_" + str(i)])
-#     arr = []
-#
-#     for i in range(len(to_find)):
-#         good_place = Goods.objects.filter(specification__contains=to_find[i])
-#         arr.append(good_place)
-#
-#     for i in range(len(arr) - 1):
-#         arr[i + 1] = arr[i].union(arr[i + 1])
-#     s = serializers.serialize('json', arr[len(arr) - 1])
-#
-#     return HttpResponse(s, content_type='json')
 
 
 @csrf_exempt
@@ -268,25 +203,59 @@ def define_geo_polygon(request):
     #
     return JsonResponse('', safe=False)
 
-#
-# import csv
-#
-# from django.http import HttpResponse
-#
-#
-# def update_place(request):
-#     # The only line to customize
-#     model_class = Goods
-#
-#     meta = model_class._meta
-#     field_names = [field.name for field in meta.fields]
-#
-#     response = HttpResponse(content_type='text/csv')
-#     response['Content-Disposition'] = 'attachment; filename={}.csv'.format(meta)
-#     writer = csv.writer(response)
-#
-#     writer.writerow(field_names)
-#     for obj in model_class.objects.all():
-#         row = writer.writerow([getattr(obj, field) for field in field_names])
-#
-#     return response
+
+@csrf_exempt
+def find_and_normalize(request):
+    id_object = request.POST['id-nmpt']
+    try:
+        df = GeoIndication.objects.get(id=id_object)
+        arrayLocs = find_locs(df.geo_loc_original)
+        arrayNormLocs = normalizeGeoLocation(arrayLocs)
+    except:
+        return JsonResponse(None, safe=False)
+
+    return JsonResponse(arrayNormLocs, safe=False)
+
+
+@csrf_exempt
+def find_coords(request):
+    request_objects = request.POST.dict()
+    id_object = request_objects['id-nmpt']
+    array = []
+    for key, value in request_objects.items():
+        if key.startswith('add'):
+            array.append(value)
+    polyObject, arr_label_to_show = define_coords(array)
+
+    df = GeoIndication.objects.get(id=id_object)
+    df.geo_loc_polygon = polyObject
+    df.save()
+
+    return JsonResponse(arr_label_to_show, safe=False)
+
+
+@csrf_exempt
+def form_page(request):
+    return render(request, 'add_poly_form.html', {})
+
+
+@csrf_exempt
+def classify_empty(request):
+    df = GeoIndication.objects.all()
+    emptySet = df.filter(target='')
+    nullSet = df.filter(target__isnull=True)
+    dict_changed = {}
+
+    for item in emptySet:
+        defined = define_class(item.description)
+        item.target = defined
+        item.save()
+        dict_changed[item.name] = defined
+
+    for item in nullSet:
+        defined = define_class(item.description)
+        item.target = defined
+        item.save()
+        dict_changed[item.name] = defined
+
+    return TemplateResponse(request, 'classify.html', context={'data': dict_changed})

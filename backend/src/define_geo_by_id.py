@@ -108,7 +108,7 @@ def find_locs(line):
 
 def normalizeGeoLocation(geo):
     time.sleep(1)
-    flag = 1
+    # flag = 1
 
     for i in range(len(geo)):
         new_geo = geo[i].strip()
@@ -121,28 +121,6 @@ def normalizeGeoLocation(geo):
         new_geo = re.sub(r'(ого) (месторождения)$', 'ое месторождение', new_geo)
 
         geo[i] = new_geo
-
-    while flag:
-
-        print('\n')
-        print("Результат после нормализации объектов:")
-        for index, value in enumerate(geo):
-            print(index, ": ", value)
-
-        print('Если есть элемент, где была допущена ошибка, введите номер (оставте пустым, если все хорошо):')
-        num_error = input()
-        if (num_error):
-            print('Введите новое значение для выбранного элемента:')
-            geo[int(num_error)] = input()
-        else:
-            flag = 0
-
-    print('\n')
-    print("Итоговый результат:")
-    for index, value in enumerate(geo):
-        print(index, value)
-
-    print('\n')
     return geo
 
 
@@ -166,7 +144,6 @@ def get_number_search_items(arr):
 
 
 def define_new_search(dict_items):
-    new_search = []
     keys, values = list(dict_items.keys()), list(dict_items.values())
     count_items, dict_count_levels = get_number_search_items(values)
     new_search = [{}]
@@ -340,16 +317,7 @@ def define_coords(geo):
                 'poly': poly
             }
 
-    print('\n')
-    print('Найдены полигоны для следующих географических объектов:')
-    for index, value in enumerate(list(set(arr_label_to_show))):
-        print(value)
-
-    print('\n')
-    print(
-        'Если поиск не дал результатов или они не верны можно повторить его, переформулиров текст или изменив значение после обработки анализатора.')
-
-    return result_poly_dict
+    return result_poly_dict, arr_label_to_show
 
 
 def defineFromText(text):
@@ -364,9 +332,16 @@ def defineFromText(text):
     print('Результат после работы анализатора текста на определение географических объектов:')
     print(arrayLocs)
     arrayNormLocs = normalizeGeoLocation(arrayLocs)
-    polyObject = define_coords(arrayNormLocs)
+    polyObject, arr_label_to_show = define_coords(arrayNormLocs)
+
+    # print('\n')
+    # print('Найдены полигоны для следующих географических объектов:')
+    # for index, value in enumerate(list(set(arr_label_to_show))):
+    #     print(value)
+    #
+    # print('\n') print( 'Если поиск не дал результатов или они не верны можно повторить его, переформулиров текст
+    # или изменив значение после обработки анализатора.')
 
     print('Обработка закончена')
-
     return polyObject
 

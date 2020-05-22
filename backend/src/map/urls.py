@@ -10,6 +10,11 @@ urlpatterns = [
     path('get_info/', views.get_info),
     path('get_image_for_product/', views.get_image_for_product),
     path('check_polygons/', views.check_polygons),
-    path('define_geo_polygon/', views.define_geo_polygon)
+    path('define_geo_polygon/', views.define_geo_polygon),
+
+    path('form_page/', views.form_page),
+    path('find_and_normalize/', views.find_and_normalize),
+    path('find_coords/', views.find_coords),
+    path('classify_empty/', views.classify_empty)
 
 ]
