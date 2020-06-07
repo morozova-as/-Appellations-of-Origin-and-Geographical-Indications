@@ -7,7 +7,7 @@ services:
       - "5000:5000"
     env_file:
       - .env
-    command: npm run start
+    command: npm run build-start
   backend:
     build: backend/
     ports:
