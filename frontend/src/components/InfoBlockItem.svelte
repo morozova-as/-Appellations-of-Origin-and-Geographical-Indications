@@ -198,6 +198,11 @@
         transform: scale(0.9);
     }
 
+    .toggle-button-reverse:not(:disabled):active {
+        background: initial;
+        transform: rotate(180deg) scale(0.9);
+    }
+
     .toggle-button-icon {
         height: 100%;
         width: 100%;
