@@ -123,6 +123,8 @@
 
         box-shadow: 0 8px 6px -6px rgba(0, 0, 0, 0.12);
         transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+
+        height: max-content;
     }
 
     .info-item:hover {

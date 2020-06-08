@@ -43,6 +43,7 @@
 		grid-row-gap: 20px;
         grid-template-columns: 100%;
 
+        height: max-content;
         max-height: 100%;
         width: 300px;
 
